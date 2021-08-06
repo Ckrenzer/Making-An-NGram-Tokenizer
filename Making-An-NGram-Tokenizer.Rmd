@@ -1,0 +1,29 @@
+---
+title: "Making An N-Gram Tokenizer"
+author: "Connor Krenzer"
+date: "8/5/2021"
+output: html_document
+---
+
+
+
+
+
+
+
+```{r setup-packages, include = FALSE}
+
+knitr::opts_chunk$set(echo = FALSE,
+                      include = TRUE,
+                      results = "show",
+                      error = FALSE,
+                      warning = FALSE,
+                      message = FALSE)
+# PACKAGES
+if(!require(pacman)) install.packages("pacman")
+
+
+```
+
+
+
