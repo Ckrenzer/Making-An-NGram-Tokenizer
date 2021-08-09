@@ -5,15 +5,6 @@ date: "8/5/2021"
 output: html_document
 ---
 
-
-#### Background
-
-I am a big fan of [Julia Silge's](https://juliasilge.com/) work. In the second chapter of the book she co-authored with [Emil Hvitfeldt](https://www.emilhvitfeldt.com/), [Supervised Machine Learning For Text Analysis in R](https://smltar.com/index.html), Julia writes in great detail about how to create a tokenizer for text datasets. She explains how tokenizers work, the difficulties of tokenizing different human languages, and importantly, she shows us how to create our own tokenizer for our own use cases. In doing so, she touches upon one of the most important heuristics of the R language and indeed programming more broadly: **functions gain flexibility at the expense of execution speed.** This is not always the case, but it holds much of the time. In Chapter 24 of Hadley's Advanced R, [Improving Performance](https://adv-r.hadley.nz/perf-improve.html#be-lazy), you see echoes of this claim. The more error-checking and customizable features that your function has, the more time your functions spend ensuring customizability rather than computing the return value.
-
-The goal, of course, is to have both--we want speed and customizability. Julia does a great job explaining the trade-offs inherent in the different tokenizer options out there, and she even provided us with some code to build our own tokenizers, but those of us tired of using black boxes want the ability to create our own functions. After reading her chapter, I wanted to build a tokenizer form the ground up.
-
-
-
 ```{r setup, include = FALSE}
 
 knitr::opts_chunk$set(echo = FALSE,
@@ -26,28 +17,86 @@ knitr::opts_chunk$set(echo = FALSE,
 ```
 
 
+#### Background
+
+I am a big fan of [Julia Silge's](https://juliasilge.com/) work. Her writings and tutorials not only show you how to be an advanced user of algorithms, but she also provides references for those looking to further their understandings of them. In the second chapter of the book she co-authored with [Emil Hvitfeldt](https://www.emilhvitfeldt.com/), [Supervised Machine Learning For Text Analysis in R](https://smltar.com/index.html), Julia writes in great detail about how to create a tokenizer for text datasets. She explains how tokenizers work, the difficulties of tokenizing different human languages, and importantly, she shows us how to create our own tokenizers for our own use cases. In doing so, she touches upon one of the most important heuristics of the R language and indeed programming more broadly: **functions gain flexibility at the expense of execution speed.** This is not always the case, but it holds much of the time. In Chapter 24 of Hadley's Advanced R, [Improving Performance](https://adv-r.hadley.nz/perf-improve.html#be-lazy), you see echoes of this claim. The more error-checking and customizable features that your function has, the more time your functions spend ensuring customizability rather than computing the return value.
+
+The goal, of course, is to have both--we want speed and customizability. Julia does a great job explaining the trade-offs inherent in the different tokenizer options out there, and she even provided us with some code to build our own tokenizers, but those of us tired of using black boxes want the ability to create our own functions. Julia provided us with a 'hand-written' function to tokenize words and letters, but she did not provide us with a tokenizer for n-grams. After reading her chapter, I wanted to build an n-gram tokenizer from the ground up, and I wanted it to be fast. This guide examines some clever ways to assemble n-grams that are viable competitors to the popular ones found on CRAN.
+
+We will start with the thought-process followed and potential bottlenecks associated with the approach, then we will implement different tokenizers, and close by benchmarking our functions on a text dataset.
 
 
 
+
+
+#### The Process
+
+Any value of n in n-grams can be constructed from unigrams. In practical terms, this means placing each word of a document into its own element of a vector and then pasting *n* adjacent words together to make the n-gram. For example, with n = 2 on the sentence "My short and exquisite sentence", we should have {"My short", "short and", "and exquisite", "exquisite sentence"} after tokenizing. Think of the tokenizer as a slide that selects two (n) words at a time until each pair of words is selected.
+
+One of the greatest bottlenecks in this approach is the step creating unigrams. If this step can be bypassed (perhaps with a well-designed regular expression), the algorithms can speed up further.
+
+
+
+
+#### Setup
+
+Let's load in all the packages we'll be using. Many of these are only used to compare the tokenizers written here to the tokenizers from official packages.
 
 ```{r packages, echo = TRUE}
 
-# PACKAGES
 if(!require(pacman)) install.packages("pacman")
-
-
 # General Packages
-pacman::p_load(stringr)
-
+pacman::p_load(stringr, data.table)
 
 # Packages with n-gram tokenizers
 pacman::p_load(tokenizers, tidytext, corpus, text2vec, quanteda)
-
 
 # Benchmarking packages
 pacman::p_load(bench)
 
 ```
+
+
+
+
+
+
+
+#### Evaluation
+
+
+If we are going to build an n-grams tokenizer, we need a text dataset! Let's use my favorite novel, [The Count of Monte Cristo](https://www.gutenberg.org/files/1184/1184-0.txt). The version used is the one from the `corpus` package's Project Gutenberg API, except the footnotes at the end of the book are removed. The data is stored in a text file to ensure reproducibility.
+
+The Count is the closest thing the 19th century world had to the Most Interesting Man In The World; if you have time to spare, give it a read!
+
+
+```{r data}
+
+# The Count of Monte Cristo by Alexandre Dumas (English Translation)
+cristo <- readLines("The Count of Monte Cristo.txt")
+
+# We want the data represented in a single string
+cristo <- str_c(cristo, collapse = " ")
+
+```
+
+
+
+
+
+
+#### Making a Tokenizer
+
+
+
+
+
+
+
+
+
+
+
 
 
 
