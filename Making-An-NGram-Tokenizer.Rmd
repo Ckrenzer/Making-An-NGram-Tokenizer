@@ -51,7 +51,7 @@ Let's load in all the packages we'll be using. Many of these are only used to co
 
 if(!require(pacman)) install.packages("pacman")
 # General Packages
-pacman::p_load(stringr, data.table)
+pacman::p_load(stringr, data.table, dplyr)
 
 # Packages with n-gram tokenizers
 pacman::p_load(tokenizers, tidytext, corpus, text2vec, quanteda)
@@ -77,7 +77,7 @@ Let's begin with a simple tokenizer and work our way up in complexity.
 
 
 
-##### Heads and Tails
+##### Heads & Tails
 
 Often, we only need bigrams (n = 2). After splitting the text into unigrams, `head()` and `tail()` combine the words into bigrams quite nicely:
 
@@ -166,7 +166,7 @@ f3 <- function(words, n = 2){
 
 ##### Tibbles
 
-Of course, we might want to use this in a magrittr pipeline. When this is the case, character vectors just won't cut it.
+Of course, we might want to use this in a magrittr pipeline. When this is the case, character vectors just won't cut it. Returning more complex data types allows for greater flexibility, but we pay for it at runtime. To drive this point home, the three above functions are adjusted to return a tibble, and `f2_tibble_custom()` is a modified version of `f2()` that allows tokenization for mulitple documents, as well as control over the input column of text.
 
 ```{r f1_tibble}
 
@@ -220,9 +220,9 @@ f3_tibble <- function(words, n = 2){
 
 
 
-```{r f2_tibble_customizable}
+```{r f2_tibble_custom}
 
-f2_tibble_customizable <- function(text_df, key_column = "company", text_column = "value", n = 2){
+f2_tibble_custom <- function(text_df, key_column = "company", text_column = "value", n = 2){
   # making unigrams
   words <- str_split(text_df[[text_column]], "\\s+", simplify = FALSE)
   n <- n - 1
@@ -242,7 +242,7 @@ f2_tibble_customizable <- function(text_df, key_column = "company", text_column 
         vec[i] <- str_c(vec[i], words[[element]][j], sep = " ") 
       }
     }
-    vec <- tibble(company = key_name, text = str_remove(vec, "^\\s{1}"))
+    vec <- tibble(key_name = key_name, text = str_remove(vec, "^\\s{1}"))
     ngram_df <- bind_rows(ngram_df, vec) 
   }
   
@@ -255,18 +255,79 @@ f2_tibble_customizable <- function(text_df, key_column = "company", text_column 
 
 
 
-#### Evaluation
+#### Data
 
-If we are going to build an n-grams tokenizer, we need a text dataset! Let's use my favorite novel, [The Count of Monte Cristo](https://www.gutenberg.org/files/1184/1184-0.txt). The version used is the one from the `corpus` package's Project Gutenberg API, except the footnotes at the end of the book are removed. The data is stored in a text file to ensure reproducibility.
+To test the n-gram tokenizers, we need data! Let's use my favorite novel, [The Count of Monte Cristo](https://www.gutenberg.org/files/1184/1184-0.txt). The version used is the one from the `corpus` package's Project Gutenberg API, except the notes at the end of the book are removed. The data is stored in a text file to ensure reproducibility.
 
 The Count is the closest thing the 19th century world had to the Most Interesting Man In The World; if you have time to spare, give it a read!
 
 ```{r data}
 
 # The Count of Monte Cristo by Alexandre Dumas (English Translation)
-cristo <- readLines("The Count of Monte Cristo.txt")
+cristo_text <- readr::read_lines("https://raw.githubusercontent.com/Ckrenzer/Making-An-NGram-Tokenizer/main/The%20Count%20of%20Monte%20Cristo.txt")
 
 # We want the data represented in a single string for tokenization
-cristo <- str_c(cristo, collapse = " ")
+cristo_text <- str_c(cristo, collapse = " ")
+
+cristo <- tibble(doc_id = "cristo", text = cristo_text)
 
 ```
+
+
+
+
+
+
+
+#### Benchmarking
+
+Finally, let's put our functions to the test! They will be compared, at n = 2, both to each other and official tokenizers found on CRAN.
+
+
+```{r benchmark}
+
+tokenizer_speeds <- bench::mark(
+  # Returning a character string
+  `Heads & Tails` = f1(words = cristo$text),
+  `Nested Loops` = f2(words = cristo$text, n = 2),
+  `Shift List` = f3(words = cristo$text, n = 2),
+  
+  `tokenizers` = tokenizers::tokenize_ngrams(x = cristo$text, n = 2, simplify = FALSE)[[1]],
+  `quanteda` = as.character(quanteda::tokens_ngrams(x = quanteda::tokens(cristo$text), n = 2)),
+  
+  
+  # Returning a tibble
+  `Heads & Tails Tibble` = f1_tibble(words = cristo$text),
+  `Nested Loops Tibble` = f2_tibble(words = cristo$text, n = 2),
+  `Shift List Tibble` = f3_tibble(words = cristo$text, n = 2),
+  
+  `Nested Loops Tibble Custom` = f2_tibble_custom(text_df = cristo, key_column = "doc_id", text_column = "text", n = 2),
+  
+  `tidytext` = tidytext::unnest_tokens(tbl = cristo, input = text, output = text, token = "ngrams", n = 2),
+  
+  
+  check = FALSE,
+  iterations = 10,
+  time_unit = "ms"
+)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
