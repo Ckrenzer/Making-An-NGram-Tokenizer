@@ -267,7 +267,7 @@ The Count is the closest thing the 19th century world had to the Most Interestin
 cristo_text <- readr::read_lines("https://raw.githubusercontent.com/Ckrenzer/Making-An-NGram-Tokenizer/main/The%20Count%20of%20Monte%20Cristo.txt")
 
 # We want the data represented in a single string for tokenization
-cristo_text <- str_c(cristo, collapse = " ")
+cristo_text <- str_c(cristo_text, collapse = " ")
 
 cristo <- tibble(doc_id = "cristo", text = cristo_text)
 
