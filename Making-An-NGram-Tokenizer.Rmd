@@ -5,9 +5,9 @@ date: "8/5/2021"
 output: html_document
 ---
 
-```{r setup, include = FALSE}
+```{r setup, echo = FALSE, include = FALSE}
 
-knitr::opts_chunk$set(echo = FALSE,
+knitr::opts_chunk$set(echo = TRUE,
                       include = TRUE,
                       results = "show",
                       error = FALSE,
@@ -47,17 +47,17 @@ One of the greatest bottlenecks in this approach is the step creating unigrams. 
 
 Let's load in all the packages we'll be using. Many of these are only used to compare the tokenizers written here to the tokenizers from official packages.
 
-```{r packages, echo = TRUE}
+```{r packages}
 
 if(!require(pacman)) install.packages("pacman")
 # General Packages
 pacman::p_load(stringr, data.table, dplyr)
 
 # Packages with n-gram tokenizers
-pacman::p_load(tokenizers, tidytext, corpus, text2vec, quanteda)
+pacman::p_load(tokenizers, tidytext)
 
 # Benchmarking packages
-pacman::p_load(bench)
+pacman::p_load(microbenchmark)
 
 ```
 
@@ -281,19 +281,18 @@ cristo <- tibble(doc_id = "cristo", text = cristo_text)
 
 #### Benchmarking
 
-Finally, let's put our functions to the test! They will be compared, at n = 2, both to each other and official tokenizers found on CRAN.
+Finally, let's put our functions to the test! They will be compared, at n = 2, both to each other and official tokenizers found on CRAN. This takes a while to run.
 
 
 ```{r benchmark}
 
-tokenizer_speeds <- bench::mark(
+tokenizer_speeds <- microbenchmark::microbenchmark(
   # Returning a character string
   `Heads & Tails` = f1(words = cristo$text),
   `Nested Loops` = f2(words = cristo$text, n = 2),
   `Shift List` = f3(words = cristo$text, n = 2),
   
   `tokenizers` = tokenizers::tokenize_ngrams(x = cristo$text, n = 2, simplify = FALSE)[[1]],
-  `quanteda` = as.character(quanteda::tokens_ngrams(x = quanteda::tokens(cristo$text), n = 2)),
   
   
   # Returning a tibble
@@ -305,10 +304,10 @@ tokenizer_speeds <- bench::mark(
   
   `tidytext` = tidytext::unnest_tokens(tbl = cristo, input = text, output = text, token = "ngrams", n = 2),
   
-  
-  check = FALSE,
-  iterations = 10,
-  time_unit = "ms"
+
+  check = NULL,
+  times = 25,
+  unit = "s"
 )
 
 ```
@@ -316,18 +315,12 @@ tokenizer_speeds <- bench::mark(
 
 
 
+```{r medians, echo = FALSE}
 
+tokenizer_speeds %>% 
+  group_by(expr) %>% 
+  summarize(median = round(median(time) / 10e8, 3)) %>% 
+  knitr::kable()
 
-
-
-
-
-
-
-
-
-
-
-
-
+```
 
