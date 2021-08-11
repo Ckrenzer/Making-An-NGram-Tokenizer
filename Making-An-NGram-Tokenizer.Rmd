@@ -24,7 +24,7 @@ I am a big fan of [Julia Silge's](https://juliasilge.com/) work. Her writings an
 
 The goal, of course, is to have both--we want speed and customizability. Julia does a great job explaining the trade-offs inherent in the different tokenizer options out there, and she even provided us with code to build our own tokenizers. Julia's 'hand-written' function breaks letters and individual words into tokens, but she did not provide us with a tokenizer for n-grams. In fact, I could not find anything online writing out the code to create an n-gram tokenizer--all the tutorials just showed me how to use `tidytext::unnest_tokens()`. I searched far and wide through the source code of `tidytext` to find the implementation to no avail--it's in there somewhere! After reading her chapter, I wanted to build an n-gram tokenizer from the ground up, and I wanted it to be fast. This guide examines some clever ways to assemble n-grams that are viable competitors to the mainstream alternatives found on CRAN.
 
-We will start by describing the plan to create a tokenizer, then we will implement different tokenizers and close by benchmarking the functions.
+We will start by describing how to create a tokenizer, then we will write different implementations and close by benchmarking the functions.
 
 
 
@@ -340,8 +340,8 @@ microbenchmark::microbenchmark(
 ```
 
 
-Depending on the day, `Heads & Tails` runs faster than the equivalent code in `tokenizers`. We beat code written in C++ with a bit of clever writing! The function from `tokenizers` uses about half the memory of `Heads & Tails` and can be used with any value of *n*, but we did this entirely in R!
+Depending on the day, `Heads & Tails` runs faster than the equivalent code in `tokenizers`. We beat code written in C++ with a bit of clever writing! The `tokenizers` function only requires about half the memory of `Heads & Tails` and can be used with any value of *n*, but we did this entirely with `stringr` and base R!
 
 
 
-Using a black box is much different from understanding an algorithm, but now you can see how tokenizers actually work!
+Using a black box is much different from understanding an algorithm, but now you can at least see how tokenizers actually work!
