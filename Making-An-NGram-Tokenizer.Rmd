@@ -9,16 +9,16 @@ output: html_document
 
 knitr::opts_chunk$set(echo = TRUE,
                       include = TRUE,
-                      results = "show",
                       error = FALSE,
                       warning = FALSE,
-                      message = FALSE)
+                      message = FALSE,
+                      eval = FALSE)
 
 ```
 
 
 
-#### Background
+#### **Background**
 
 I am a big fan of [Julia Silge's](https://juliasilge.com/) work. Her writings and tutorials not only show you how to be an advanced user of algorithms, but she also provides references for those looking to further their understanding of them. In the second chapter of the book she co-authored with [Emil Hvitfeldt](https://www.emilhvitfeldt.com/), [Supervised Machine Learning For Text Analysis in R](https://smltar.com/index.html), Julia writes in great detail about how to create a tokenizer for text data. She explains how tokenizers work, the difficulties of tokenizing different human languages, and importantly, she shows us how to create our own tokenizers for our own use cases. In doing so, she touches upon one of the most important heuristics of the R language and indeed programming more broadly: **functions gain flexibility at the expense of execution speed.** This is not always the case, but it holds much of the time. In Chapter 24 of Hadley's Advanced R, [Improving Performance](https://adv-r.hadley.nz/perf-improve.html#be-lazy), you see echoes of this claim. The more error-checking and custom features your function has, the more time your function spends ensuring customizability rather than computing the return value.
 
@@ -32,7 +32,7 @@ We will start by describing the plan to create a tokenizer and potential bottlen
 
 
 
-#### The Process
+#### **The Process**
 
 Any value of *n* in n-grams can be constructed from unigrams. In practical terms, this means placing each word of a document into its own element of a vector and then pasting *n* adjacent words together to make the n-gram. For example, with *n = 2* on the sentence, "My short and exquisite sentence", we should have {"My short", "short and", "and exquisite", "exquisite sentence"} after tokenizing. Think of the tokenizer as a slide that selects two (*n*) words at a time until each pair of words is selected.
 
@@ -43,7 +43,7 @@ One of the greatest bottlenecks in this approach is the step creating unigrams. 
 
 
 
-#### Packages
+#### **Packages**
 
 Let's load in all the packages we'll be using.
 
@@ -69,7 +69,7 @@ pacman::p_load(microbenchmark)
 
 
 
-#### Tokenizers
+#### **Tokenizers**
 
 As mentioned above, the more restricted a function's output, the faster the function's execution speed--the more complex the data structure used, the longer it takes to run. Often, we will want to return a data frame instead of a character vector. This will cost us dearly, but the flexibility gained from doing so is often well-worth it.
 
@@ -77,7 +77,7 @@ Let's begin with a simple tokenizer and work our way up in complexity.
 
 
 
-##### Heads & Tails
+##### **Heads & Tails**
 
 Often, we only need bigrams (*n = 2*). After splitting the text into unigrams, `head()` and `tail()` combine the words into bigrams quite nicely:
 
@@ -101,9 +101,9 @@ f1 <- function(words){
 
 
 
-##### Nested Loops
+##### **Nested Loops**
 
-For those of us who like to think about problems by tracing out each step, loops work wonders. It is not guaranteed to be the fastest implementation in R, but this methodology translates nicely to other languages:
+For those of us who like to think about problems by tracing out each step, loops work wonders. It is not guaranteed to be a fast implementation in R, but this methodology translates nicely to other languages:
 
 ```{r f2}
 
@@ -132,7 +132,7 @@ f2 <- function(words, n = 2){
 
 
 
-##### Shift Lists
+##### **Shift Lists**
 
 Data.table's `shift()` function provides us with a bona fide slider as described above. We can then use loop functions to assemble the n-grams. Do you have a shift list?
 
@@ -164,7 +164,7 @@ f3 <- function(words, n = 2){
 
 
 
-##### Tibbles
+##### **Tibbles**
 
 Of course, we might want to tokenize in a magrittr pipeline. When this is the case, character vectors usually won't cut it. Returning more complex data types allows for greater flexibility, but we pay for it at run time. To drive this point home, the three above functions are adjusted to return a tibble, and `f2_tibble_custom()` is a modified version of `f2()` that allows tokenization for mulitple documents, as well as control over the input column of text.
 
@@ -255,7 +255,7 @@ f2_tibble_custom <- function(text_df, key_column = "company", text_column = "val
 
 
 
-#### Data
+#### **Data**
 
 To test our functions, we need data! Let's use my favorite novel, [The Count of Monte Cristo](https://www.gutenberg.org/files/1184/1184-0.txt). The version used is the one from the `corpus` package's Project Gutenberg API, except the notes at the end of the book have been removed. The data is stored in a text file to ensure reproducibility.
 
@@ -279,16 +279,16 @@ cristo <- tibble(doc_id = "cristo", text = cristo_text)
 
 
 
-#### Benchmarking
+#### **Benchmarking**
 
 Finally, let's put our functions to the test! They will be compared, at *n = 2*, to each other and official tokenizers found on CRAN (`tokenizers` for character vectors and `tidytext` for tibbles). This takes a while to run.
 
 
 ```{r benchmark}
 
-# Returns a character vector
-tokenizer_speeds_character <- microbenchmark::microbenchmark(
-  # Returning a character string
+# These functions return a character vector
+microbenchmark::microbenchmark(
+
   `Heads & Tails` = f1(words = cristo$text),
   `Nested Loops` = f2(words = cristo$text, n = 2),
   `Shift List` = f3(words = cristo$text, n = 2),
@@ -301,11 +301,19 @@ tokenizer_speeds_character <- microbenchmark::microbenchmark(
   unit = "s"
 )
 
+#> Unit: seconds
+#>           expr       min        lq      mean    median         uq        max neval
+#>  Heads & Tails 0.2889884 0.3867171 0.4575909 0.4182707  0.5038394  0.7673346    25
+#>   Nested Loops 6.7113265 8.0643973 9.1981370 8.9747056 10.2201626 12.1695817    25
+#>     Shift List 0.4393635 0.5288969 0.7289757 0.6653517  0.8351631  1.5823200    25
+#>     tokenizers 0.3321225 0.4031210 0.4658819 0.4320680  0.5043797  0.8674276    25
 
 
 
-# Returns a tibble
-tokenizer_speeds_tibble <- microbenchmark::microbenchmark(
+
+
+# These functions return a tibble
+microbenchmark::microbenchmark(
   
   `Heads & Tails` = f1_tibble(words = cristo$text),
   `Nested Loops` = f2_tibble(words = cristo$text, n = 2),
@@ -321,23 +329,19 @@ tokenizer_speeds_tibble <- microbenchmark::microbenchmark(
   unit = "s"
 )
 
-```
-
-
-
-
-```{r medians, echo = FALSE}
-
-tokenizer_speeds_character %>% 
-  group_by(expr) %>% 
-  summarize(median = round(median(time) / 10e8, 3)) %>% 
-  knitr::kable()
-
-
-tokenizer_speeds_tibble %>% 
-  group_by(expr) %>% 
-  summarize(median = round(median(time) / 10e8, 3)) %>% 
-  knitr::kable()
+#> Unit: seconds
+#>                 expr       min        lq      mean    median        uq       max neval
+#>        Heads & Tails 0.2997065 0.3412449 0.3957833 0.3633596 0.4006367 0.6814346    25
+#>         Nested Loops 7.0280510 7.3828038 7.7136532 7.6348447 7.8778614 9.7611280    25
+#>           Shift List 0.3780660 0.4803673 0.5579947 0.5167267 0.5703890 0.8564233    25
+#>  Nested Loops Custom 7.1850311 7.5984540 7.9887214 7.9386131 8.1067919 9.5205180    25
+#>             tidytext 0.4621718 0.5305908 0.5828535 0.5530582 0.6049297 0.9781302    25
 
 ```
 
+
+Depending on the day, `Heads & Tails` runs faster than the equivalent code in `tokenizers`. The function from `tokenizers` uses about half the memory of `Heads & Tails` and can be used with any value of *n*, however. But we did this entirely in R! We beat code written in C++ with a bit of clever writing.
+
+
+
+Using a black box is much different from knowing how to use an algorithm, so hopefully you can apply the heuristics found here to truly understand what happens behind the scenes.
