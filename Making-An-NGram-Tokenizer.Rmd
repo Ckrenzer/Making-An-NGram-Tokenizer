@@ -22,9 +22,9 @@ knitr::opts_chunk$set(echo = TRUE,
 
 I am a big fan of [Julia Silge's](https://juliasilge.com/) work. Her writings and tutorials not only show you how to be an advanced user of algorithms, but she also provides references for those looking to further their understanding of them. In the second chapter of the book she co-authored with [Emil Hvitfeldt](https://www.emilhvitfeldt.com/), [Supervised Machine Learning For Text Analysis in R](https://smltar.com/index.html), Julia writes in great detail about how to create a tokenizer for text data. She explains how tokenizers work, the difficulties of tokenizing different human languages, and importantly, she shows us how to create our own tokenizers for our own use cases. In doing so, she touches upon one of the most important heuristics of the R language and indeed programming more broadly: **functions gain flexibility at the expense of execution speed.** This is not always the case, but it holds much of the time. In Chapter 24 of Hadley's Advanced R, [Improving Performance](https://adv-r.hadley.nz/perf-improve.html#be-lazy), you see echoes of this claim. The more error-checking and custom features your function has, the more time your function spends ensuring customizability rather than computing the return value.
 
-The goal, of course, is to have both--we want speed and customizability. Julia does a great job explaining the trade-offs inherent in the different tokenizer options out there, and she even provided us with code to build our own tokenizers. Julia's 'hand-written' function breaks letters and individual words into tokens, but she did not provide us with a tokenizer for n-grams. In fact, I could not find anything online writing out the code to create an n-gram tokenizer--all the tutorials just showed me how to use `tidytext::unnest_tokens()`; searching through the source code of `tidytext` to find the implementation came to no avail. After reading her chapter, I wanted to build an n-gram tokenizer from the ground up, and I wanted it to be fast. This guide examines some clever ways to assemble n-grams that are viable competitors to the mainstream alternatives found on CRAN.
+The goal, of course, is to have both--we want speed and customizability. Julia does a great job explaining the trade-offs inherent in the different tokenizer options out there, and she even provided us with code to build our own tokenizers. Julia's 'hand-written' function breaks letters and individual words into tokens, but she did not provide us with a tokenizer for n-grams. In fact, I could not find anything online writing out the code to create an n-gram tokenizer--all the tutorials just showed me how to use `tidytext::unnest_tokens()`. I searched far and wide through the source code of `tidytext` to find the implementation to no avail--it's in there somewhere! After reading her chapter, I wanted to build an n-gram tokenizer from the ground up, and I wanted it to be fast. This guide examines some clever ways to assemble n-grams that are viable competitors to the mainstream alternatives found on CRAN.
 
-We will start by describing the plan to create a tokenizer and potential bottlenecks associated with our approach, then we will implement different tokenizers and close by benchmarking the functions on a text dataset.
+We will start by describing the plan to create a tokenizer, then we will implement different tokenizers and close by benchmarking the functions.
 
 
 
@@ -45,7 +45,7 @@ One of the greatest bottlenecks in this approach is the step creating unigrams. 
 
 #### **Packages**
 
-Let's load in all the packages we'll be using.
+Let's load in all the packages we'll be using:
 
 ```{r packages}
 
@@ -96,7 +96,7 @@ f1 <- function(words){
 
 -   Paste the vectors together using `head()` and `tail()`.
 
--   **Bigrams only**.
+-   **Bigrams** **(*****n = 2*****)** **only.**
 
 
 
@@ -128,7 +128,7 @@ f2 <- function(words, n = 2){
 
 -   Use nested loops to assemble pairings of *n* words together.
 
--   **Works for any value of n**.
+-   **Works for any value of** *** n.***
 
 
 
@@ -157,7 +157,7 @@ f3 <- function(words, n = 2){
 
 -   Use the length of the shortest list when calling the `head()` function and assemble the word vector with `paste()` and `do.call()`.
 
--   **Does not work for n = 1**.
+-   **Does not work for** ***n = 1*****.**
 
 
 
@@ -259,7 +259,7 @@ f2_tibble_custom <- function(text_df, key_column = "company", text_column = "val
 
 To test our functions, we need data! Let's use my favorite novel, [The Count of Monte Cristo](https://www.gutenberg.org/files/1184/1184-0.txt). The version used is the one from the `corpus` package's Project Gutenberg API, except the notes at the end of the book have been removed. The data is stored in a text file to ensure reproducibility.
 
-The Count is the closest thing the 19th century world had to the Most Interesting Man In The World; if you have time to spare, give it a read!
+The Count is the closest thing the 19th century had to the Most Interesting Man In The World; if you have time to spare, give it a read!
 
 ```{r data}
 
@@ -340,8 +340,8 @@ microbenchmark::microbenchmark(
 ```
 
 
-Depending on the day, `Heads & Tails` runs faster than the equivalent code in `tokenizers`. The function from `tokenizers` uses about half the memory of `Heads & Tails` and can be used with any value of *n*, however. But we did this entirely in R! We beat code written in C++ with a bit of clever writing.
+Depending on the day, `Heads & Tails` runs faster than the equivalent code in `tokenizers`. We beat code written in C++ with a bit of clever writing! The function from `tokenizers` uses about half the memory of `Heads & Tails` and can be used with any value of *n*, but we did this entirely in R!
 
 
 
-Using a black box is much different from knowing how to use an algorithm, so hopefully you can apply the heuristics found here to truly understand what happens behind the scenes.
+Using a black box is much different from understanding an algorithm, but now you can see how tokenizers actually work!
