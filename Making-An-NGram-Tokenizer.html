@@ -171,20 +171,19 @@ pre code {
 </div>
 
 
-<div id="background" class="section level4">
-<h4><strong>Background</strong></h4>
-<p>You can find the repo hosting this guide <a href="https://github.com/Ckrenzer/Making-An-NGram-Tokenizer">here</a>.</p>
+<div id="background" class="section level3">
+<h3><strong>Background</strong></h3>
 <p>I am a big fan of <a href="https://juliasilge.com/">Julia Silge’s</a> work. Her writings and tutorials not only show you how to be an advanced user of algorithms, but she also provides references for those looking to further their understanding of them. In the second chapter of the book she co-authored with <a href="https://www.emilhvitfeldt.com/">Emil Hvitfeldt</a>, <a href="https://smltar.com/index.html">Supervised Machine Learning For Text Analysis in R</a>, Julia writes in great detail about how to create a tokenizer for text data. She explains how tokenizers work, the difficulties of tokenizing different human languages, and importantly, she shows us how to create our own tokenizers for our own use cases. In doing so, she touches upon one of the most important heuristics of the R language and indeed programming more broadly: <strong>functions gain flexibility at the expense of execution speed.</strong> This is not always the case, but it holds much of the time. In Chapter 24 of Hadley’s Advanced R, <a href="https://adv-r.hadley.nz/perf-improve.html#be-lazy">Improving Performance</a>, you see echoes of this claim. The more error-checking and custom features your function has, the more time your function spends ensuring customizability rather than computing the return value.</p>
 <p>The goal, of course, is to have both–we want speed and customizability. Julia does a great job explaining the trade-offs inherent in the different tokenizer options out there, and she even provided us with code to build our own tokenizers. Julia’s ‘hand-written’ function breaks letters and individual words into tokens, but she did not provide us with a tokenizer for n-grams. In fact, I could not find anything online writing out the code to create an n-gram tokenizer–all the tutorials just showed me how to use <code>tidytext::unnest_tokens()</code>. I searched far and wide through the source code of <code>tidytext</code> to find the implementation to no avail–it’s in there somewhere! After reading her chapter, I wanted to build an n-gram tokenizer from the ground up, and I wanted it to be fast. This guide examines some clever ways to assemble n-grams that are viable competitors to the mainstream alternatives found on CRAN.</p>
 <p>We will start by describing how to create a tokenizer, then we will write different implementations and close by benchmarking the functions.</p>
 </div>
-<div id="the-process" class="section level4">
-<h4><strong>The Process</strong></h4>
+<div id="the-process" class="section level3">
+<h3><strong>The Process</strong></h3>
 <p>Any value of <em>n</em> in n-grams can be constructed from unigrams. In practical terms, this means placing each word of a document into its own element of a vector and then pasting <em>n</em> adjacent words together to make the n-gram. For example, with <em>n = 2</em> on the sentence, “My short and exquisite sentence”, we should have {“My short”, “short and”, “and exquisite”, “exquisite sentence”} after tokenizing. Think of the tokenizer as a slide that selects two (<em>n</em>) words at a time until each pair of words is selected.</p>
 <p>One of the greatest bottlenecks in this approach is the step creating unigrams. If this can be bypassed (perhaps with a well-designed regular expression?), the implementations can speed up further.</p>
 </div>
-<div id="packages" class="section level4">
-<h4><strong>Packages</strong></h4>
+<div id="packages" class="section level3">
+<h3><strong>Packages</strong></h3>
 <p>Let’s load in all the packages we’ll be using:</p>
 <pre class="r"><code>if(!require(pacman)) install.packages(&quot;pacman&quot;)
 # General Packages
@@ -196,8 +195,8 @@ pacman::p_load(tokenizers, tidytext)
 # Benchmarking packages
 pacman::p_load(microbenchmark)</code></pre>
 </div>
-<div id="tokenizers" class="section level4">
-<h4><strong>Tokenizers</strong></h4>
+<div id="tokenizers" class="section level3">
+<h3><strong>Tokenizers</strong></h3>
 <p>As mentioned above, the more restricted a function’s output, the faster the function’s execution speed–the more complex the data structure used, the longer it takes to run. Often, we will want to return a data frame instead of a character vector. This will cost us dearly, but the flexibility gained from doing so is often well-worth it.</p>
 <p>Let’s begin with a simple tokenizer and work our way up in complexity.</p>
 <div id="heads-tails" class="section level5">
@@ -235,7 +234,7 @@ pacman::p_load(microbenchmark)</code></pre>
 <ul>
 <li><p>Split the string into unigrams.</p></li>
 <li><p>Use nested loops to assemble pairings of <em>n</em> words together.</p></li>
-<li><p><strong>Works for any value of</strong> *** n.***</p></li>
+<li><p><strong>Works for any value of </strong> <strong><em>n.</em></strong></p></li>
 </ul>
 </div>
 <div id="shift-lists" class="section level5">
@@ -321,6 +320,8 @@ f3 &lt;- function(words, n = 2){
 }</code></pre>
 </div>
 </div>
+<div id="benchmarking" class="section level3">
+<h3><strong>Benchmarking</strong></h3>
 <div id="data" class="section level4">
 <h4><strong>Data</strong></h4>
 <p>To test our functions, we need data! Let’s use my favorite novel, <a href="https://www.gutenberg.org/files/1184/1184-0.txt">The Count of Monte Cristo</a>. The version used is the one from the <code>corpus</code> package’s Project Gutenberg API, except the notes at the end of the book have been removed. The data is stored in a text file to ensure reproducibility.</p>
@@ -332,9 +333,6 @@ cristo_text &lt;- readr::read_lines(&quot;https://raw.githubusercontent.com/Ckre
 cristo_text &lt;- str_c(cristo_text, collapse = &quot; &quot;)
 
 cristo &lt;- tibble(doc_id = &quot;cristo&quot;, text = cristo_text)</code></pre>
-</div>
-<div id="benchmarking" class="section level4">
-<h4><strong>Benchmarking</strong></h4>
 <p>Finally, let’s put our functions to the test! They will be compared, at <em>n = 2</em>, to each other and official tokenizers found on CRAN (<code>tokenizers</code> for character vectors and <code>tidytext</code> for tibbles). This takes a while to run.</p>
 <pre class="r"><code># These functions return a character vector
 microbenchmark::microbenchmark(
@@ -388,6 +386,8 @@ microbenchmark::microbenchmark(
 #&gt;             tidytext 0.4621718 0.5305908 0.5828535 0.5530582 0.6049297 0.9781302    25</code></pre>
 <p>Depending on the day, <code>Heads &amp; Tails</code> runs faster than the equivalent code in <code>tokenizers</code>. We beat code written in C++ with a bit of clever writing! The <code>tokenizers</code> function only requires about half the memory of <code>Heads &amp; Tails</code> and can be used with any value of <em>n</em>, but we did this entirely with <code>stringr</code> and base R!</p>
 <p>Using a black box is much different from understanding an algorithm, but now you can at least see how tokenizers actually work!</p>
+<p>You can find the repo hosting this post <a href="https://github.com/Ckrenzer/Making-An-NGram-Tokenizer">here</a>.</p>
+</div>
 </div>
 
 

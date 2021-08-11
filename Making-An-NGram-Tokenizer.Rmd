@@ -18,9 +18,7 @@ knitr::opts_chunk$set(echo = TRUE,
 
 
 
-#### **Background**
-
-You can find the repo hosting this guide [here](https://github.com/Ckrenzer/Making-An-NGram-Tokenizer).
+### **Background**
 
 I am a big fan of [Julia Silge's](https://juliasilge.com/) work. Her writings and tutorials not only show you how to be an advanced user of algorithms, but she also provides references for those looking to further their understanding of them. In the second chapter of the book she co-authored with [Emil Hvitfeldt](https://www.emilhvitfeldt.com/), [Supervised Machine Learning For Text Analysis in R](https://smltar.com/index.html), Julia writes in great detail about how to create a tokenizer for text data. She explains how tokenizers work, the difficulties of tokenizing different human languages, and importantly, she shows us how to create our own tokenizers for our own use cases. In doing so, she touches upon one of the most important heuristics of the R language and indeed programming more broadly: **functions gain flexibility at the expense of execution speed.** This is not always the case, but it holds much of the time. In Chapter 24 of Hadley's Advanced R, [Improving Performance](https://adv-r.hadley.nz/perf-improve.html#be-lazy), you see echoes of this claim. The more error-checking and custom features your function has, the more time your function spends ensuring customizability rather than computing the return value.
 
@@ -34,7 +32,7 @@ We will start by describing how to create a tokenizer, then we will write differ
 
 
 
-#### **The Process**
+### **The Process**
 
 Any value of *n* in n-grams can be constructed from unigrams. In practical terms, this means placing each word of a document into its own element of a vector and then pasting *n* adjacent words together to make the n-gram. For example, with *n = 2* on the sentence, "My short and exquisite sentence", we should have {"My short", "short and", "and exquisite", "exquisite sentence"} after tokenizing. Think of the tokenizer as a slide that selects two (*n*) words at a time until each pair of words is selected.
 
@@ -45,7 +43,7 @@ One of the greatest bottlenecks in this approach is the step creating unigrams. 
 
 
 
-#### **Packages**
+### **Packages**
 
 Let's load in all the packages we'll be using:
 
@@ -71,7 +69,7 @@ pacman::p_load(microbenchmark)
 
 
 
-#### **Tokenizers**
+### **Tokenizers**
 
 As mentioned above, the more restricted a function's output, the faster the function's execution speed--the more complex the data structure used, the longer it takes to run. Often, we will want to return a data frame instead of a character vector. This will cost us dearly, but the flexibility gained from doing so is often well-worth it.
 
@@ -130,7 +128,7 @@ f2 <- function(words, n = 2){
 
 -   Use nested loops to assemble pairings of *n* words together.
 
--   **Works for any value of** *** n.***
+-   **Works for any value of ** ***n.***
 
 
 
@@ -257,6 +255,10 @@ f2_tibble_custom <- function(text_df, key_column = "company", text_column = "val
 
 
 
+
+
+### **Benchmarking**
+
 #### **Data**
 
 To test our functions, we need data! Let's use my favorite novel, [The Count of Monte Cristo](https://www.gutenberg.org/files/1184/1184-0.txt). The version used is the one from the `corpus` package's Project Gutenberg API, except the notes at the end of the book have been removed. The data is stored in a text file to ensure reproducibility.
@@ -277,11 +279,6 @@ cristo <- tibble(doc_id = "cristo", text = cristo_text)
 
 
 
-
-
-
-
-#### **Benchmarking**
 
 Finally, let's put our functions to the test! They will be compared, at *n = 2*, to each other and official tokenizers found on CRAN (`tokenizers` for character vectors and `tidytext` for tibbles). This takes a while to run.
 
@@ -321,9 +318,16 @@ microbenchmark::microbenchmark(
   `Nested Loops` = f2_tibble(words = cristo$text, n = 2),
   `Shift List` = f3_tibble(words = cristo$text, n = 2),
   
-  `Nested Loops Custom` = f2_tibble_custom(text_df = cristo, key_column = "doc_id", text_column = "text", n = 2),
+  `Nested Loops Custom` = f2_tibble_custom(text_df = cristo,
+                                           key_column = "doc_id",
+                                           text_column = "text",
+                                           n = 2),
   
-  `tidytext` = tidytext::unnest_tokens(tbl = cristo, input = text, output = text, token = "ngrams", n = 2),
+  `tidytext` = tidytext::unnest_tokens(tbl = cristo,
+                                       input = text,
+                                       output = text,
+                                       token = "ngrams",
+                                       n = 2),
   
   
   check = NULL,
@@ -347,3 +351,5 @@ Depending on the day, `Heads & Tails` runs faster than the equivalent code in `t
 
 
 Using a black box is much different from understanding an algorithm, but now you can at least see how tokenizers actually work!
+
+You can find the repo hosting this post [here](https://github.com/Ckrenzer/Making-An-NGram-Tokenizer).
