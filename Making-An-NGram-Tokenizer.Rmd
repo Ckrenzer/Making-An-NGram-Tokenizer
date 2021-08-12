@@ -279,10 +279,10 @@ cristo <- tibble(doc_id = "cristo", text = cristo_text)
 
 
 
-Finally, let's put our functions to the test! They will be compared, at *n = 2*, to each other and official tokenizers found on CRAN (`tokenizers` for character vectors and `tidytext` for tibbles). This takes a while to run.
+Finally, let's put our functions to the test! They will be compared, at *n = 2*, to each other and official tokenizers found on CRAN (`tokenizers` for character vectors and `tidytext` for tibbles). These take a while to run.
 
 
-```{r benchmark}
+```{r benchmark-vector}
 
 # These functions return a character vector
 microbenchmark::microbenchmark(
@@ -306,9 +306,11 @@ microbenchmark::microbenchmark(
 #>     Shift List 0.4393635 0.5288969 0.7289757 0.6653517  0.8351631  1.5823200    25
 #>     tokenizers 0.3321225 0.4031210 0.4658819 0.4320680  0.5043797  0.8674276    25
 
+```
 
 
 
+```{r benchmark-tibble}
 
 # These functions return a tibble
 microbenchmark::microbenchmark(

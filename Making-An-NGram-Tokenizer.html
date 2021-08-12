@@ -332,7 +332,7 @@ cristo_text &lt;- readr::read_lines(&quot;https://raw.githubusercontent.com/Ckre
 cristo_text &lt;- str_c(cristo_text, collapse = &quot; &quot;)
 
 cristo &lt;- tibble(doc_id = &quot;cristo&quot;, text = cristo_text)</code></pre>
-<p>Finally, let’s put our functions to the test! They will be compared, at <em>n = 2</em>, to each other and official tokenizers found on CRAN (<code>tokenizers</code> for character vectors and <code>tidytext</code> for tibbles). This takes a while to run.</p>
+<p>Finally, let’s put our functions to the test! They will be compared, at <em>n = 2</em>, to each other and official tokenizers found on CRAN (<code>tokenizers</code> for character vectors and <code>tidytext</code> for tibbles). These take a while to run.</p>
 <pre class="r"><code># These functions return a character vector
 microbenchmark::microbenchmark(
 
@@ -353,13 +353,8 @@ microbenchmark::microbenchmark(
 #&gt;  Heads &amp; Tails 0.2889884 0.3867171 0.4575909 0.4182707  0.5038394  0.7673346    25
 #&gt;   Nested Loops 6.7113265 8.0643973 9.1981370 8.9747056 10.2201626 12.1695817    25
 #&gt;     Shift List 0.4393635 0.5288969 0.7289757 0.6653517  0.8351631  1.5823200    25
-#&gt;     tokenizers 0.3321225 0.4031210 0.4658819 0.4320680  0.5043797  0.8674276    25
-
-
-
-
-
-# These functions return a tibble
+#&gt;     tokenizers 0.3321225 0.4031210 0.4658819 0.4320680  0.5043797  0.8674276    25</code></pre>
+<pre class="r"><code># These functions return a tibble
 microbenchmark::microbenchmark(
   
   `Heads &amp; Tails` = f1_tibble(words = cristo$text),
