@@ -350,5 +350,3 @@ Depending on the day, `Heads & Tails` runs faster than the equivalent code in `t
 
 
 Using a black box is much different from understanding an algorithm, but now you can at least see how tokenizers actually work!
-
-You can find the repo hosting this post [here](https://github.com/Ckrenzer/Making-An-NGram-Tokenizer).
