@@ -221,7 +221,7 @@ f3_tibble <- function(words, n = 2){
 
 ```{r f2_tibble_custom}
 
-f2_tibble_custom <- function(text_df, key_column = "company", text_column = "value", n = 2){
+f2_tibble_custom <- function(text_df, key_column, text_column, n = 2){
   # the unigrams
   words <- str_split(text_df[[text_column]], "\\s+", simplify = FALSE)
   n <- n - 1

@@ -291,7 +291,7 @@ pacman::p_load(microbenchmark)</code></pre>
   
   return(tibble(text = grams))
 }</code></pre>
-<pre class="r"><code>f2_tibble_custom &lt;- function(text_df, key_column = &quot;company&quot;, text_column = &quot;value&quot;, n = 2){
+<pre class="r"><code>f2_tibble_custom &lt;- function(text_df, key_column, text_column, n = 2){
   # the unigrams
   words &lt;- str_split(text_df[[text_column]], &quot;\\s+&quot;, simplify = FALSE)
   n &lt;- n - 1
