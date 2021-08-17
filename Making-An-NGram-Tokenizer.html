@@ -297,7 +297,7 @@ pacman::p_load(microbenchmark)</code></pre>
   n &lt;- n - 1
   
   # results will be added to this data frame
-  ngram_df &lt;- tibble(company = character(0), text = character(0))
+  ngram_df &lt;- tibble(doc_id = character(0), text = character(0))
   
   # performing this operation for each &#39;key&#39; in the data frame
   for(element in 1:length(words)){
@@ -311,8 +311,8 @@ pacman::p_load(microbenchmark)</code></pre>
         vec[i] &lt;- str_c(vec[i], words[[element]][j], sep = &quot; &quot;) 
       }
     }
-    vec &lt;- tibble(key_name = key_name, text = str_remove(vec, &quot;^\\s{1}&quot;))
-    ngram_df &lt;- bind_rows(ngram_df, vec) 
+    ngram &lt;- tibble(doc_id = key_name, text = str_remove(vec, &quot;^\\s{1}&quot;))
+    ngram_df &lt;- bind_rows(ngram_df, ngram) 
   }
   
   return(ngram_df)

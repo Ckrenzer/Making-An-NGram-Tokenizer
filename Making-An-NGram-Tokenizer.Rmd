@@ -227,7 +227,7 @@ f2_tibble_custom <- function(text_df, key_column, text_column, n = 2){
   n <- n - 1
   
   # results will be added to this data frame
-  ngram_df <- tibble(company = character(0), text = character(0))
+  ngram_df <- tibble(doc_id = character(0), text = character(0))
   
   # performing this operation for each 'key' in the data frame
   for(element in 1:length(words)){
@@ -241,8 +241,8 @@ f2_tibble_custom <- function(text_df, key_column, text_column, n = 2){
         vec[i] <- str_c(vec[i], words[[element]][j], sep = " ") 
       }
     }
-    vec <- tibble(key_name = key_name, text = str_remove(vec, "^\\s{1}"))
-    ngram_df <- bind_rows(ngram_df, vec) 
+    ngram <- tibble(doc_id = key_name, text = str_remove(vec, "^\\s{1}"))
+    ngram_df <- bind_rows(ngram_df, ngram) 
   }
   
   return(ngram_df)
